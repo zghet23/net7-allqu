@@ -1,0 +1,216 @@
+@page "/"
+@rendermode InteractiveServer
+@using LogGenerator.Services
+@inject LogService LogSvc
+@inject ExternalCallService ExtSvc
+@implements IDisposable
+
+<PageTitle>Log Generator — ECS Fargate Demo</PageTitle>
+
+<div class="container-fluid py-3">
+    <h2 class="mb-1">Log Generator <span class="badge bg-secondary fs-6">ECS Fargate Demo</span></h2>
+    <p class="text-muted mb-4">Genera logs estructurados y llamados a servicios externos para observabilidad en AWS.</p>
+
+    @if (_busy)
+    {
+        <div class="alert alert-info py-2">
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            @_busyMessage
+        </div>
+    }
+
+    <!-- LOG LEVEL SECTION -->
+    <div class="card mb-3">
+        <div class="card-header fw-bold">Generacion de Logs por Nivel</div>
+        <div class="card-body d-flex flex-wrap gap-2">
+            <button class="btn btn-outline-info"      @onclick="OnInfo"      disabled="@_busy">INFO</button>
+            <button class="btn btn-outline-secondary" @onclick="OnDebug"     disabled="@_busy">DEBUG</button>
+            <button class="btn btn-outline-warning"   @onclick="OnWarning"   disabled="@_busy">WARNING</button>
+            <button class="btn btn-outline-danger"    @onclick="OnError"     disabled="@_busy">ERROR</button>
+            <button class="btn btn-danger"            @onclick="OnCritical"  disabled="@_busy">CRITICAL</button>
+            <button class="btn btn-dark"              @onclick="OnException" disabled="@_busy">EXCEPTION</button>
+            <button class="btn btn-outline-primary"   @onclick="OnBatch"     disabled="@_busy">BATCH (20 logs)</button>
+        </div>
+    </div>
+
+    <!-- EXTERNAL CALLS SECTION -->
+    <div class="card mb-3">
+        <div class="card-header fw-bold">Llamados a Servicios Externos</div>
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                @foreach (var svc in ExtSvc.GetServiceNames())
+                {
+                    <button class="btn btn-outline-primary" @onclick="() => OnPing(svc)" disabled="@_busy">
+                        Ping @svc
+                    </button>
+                }
+                <button class="btn btn-primary" @onclick="OnPingAll" disabled="@_busy">
+                    Ping TODOS (paralelo)
+                </button>
+            </div>
+            @if (_lastResults.Count > 0)
+            {
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Servicio</th>
+                            <th>Status</th>
+                            <th>HTTP</th>
+                            <th>Latencia</th>
+                            <th>Mensaje</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in _lastResults)
+                        {
+                            <tr class="@(r.Success ? "" : "table-danger")">
+                                <td>@r.Service</td>
+                                <td>@(r.Success ? "OK" : "FAIL")</td>
+                                <td>@(r.StatusCode > 0 ? r.StatusCode.ToString() : "-")</td>
+                                <td>@r.ElapsedMs ms</td>
+                                <td class="text-muted small">@r.Message</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+
+    <!-- ERROR SCENARIOS SECTION -->
+    <div class="card mb-3">
+        <div class="card-header fw-bold">Escenarios de Error</div>
+        <div class="card-body d-flex flex-wrap gap-2">
+            <button class="btn btn-warning"           @onclick="OnTimeout"  disabled="@_busy">Timeout (2s)</button>
+            <button class="btn btn-warning"           @onclick="OnHttp500"  disabled="@_busy">HTTP 500</button>
+            <button class="btn btn-warning"           @onclick="OnDnsFail"  disabled="@_busy">DNS Failure</button>
+            <button class="btn btn-warning text-dark" @onclick="OnRetry"    disabled="@_busy">Retry con Backoff</button>
+        </div>
+    </div>
+
+    <!-- LOG CONSOLE -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center fw-bold">
+            <span>Console (@_entries.Count() entradas)</span>
+            <button class="btn btn-sm btn-outline-secondary" @onclick="OnClear">Limpiar</button>
+        </div>
+        <div class="card-body p-0">
+            <div class="p-2" style="height:380px;overflow-y:auto;background:#1e1e1e;font-family:monospace;font-size:12px;">
+                @foreach (var e in _entries)
+                {
+                    <div style="margin-bottom:2px;">
+                        <span style="color:#888;">@e.Timestamp.ToString("HH:mm:ss.fff")</span>
+                        <span class="ms-2 badge @GetBadgeCss(e.Level)">@e.Level</span>
+                        <span class="ms-2" style="color:@GetLevelColor(e.Level)">@e.Message</span>
+                        @if (!string.IsNullOrEmpty(e.Detail))
+                        {
+                            <span style="color:#888;"> — @e.Detail</span>
+                        }
+                    </div>
+                }
+                @if (!_entries.Any())
+                {
+                    <div style="color:#666;" class="p-3">Presiona un boton para generar logs...</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool _busy;
+    private string _busyMessage = "";
+    private IEnumerable<LogEntry> _entries = [];
+    private List<ExternalCallResult> _lastResults = [];
+
+    protected override void OnInitialized()
+    {
+        LogSvc.OnLogsChanged += RefreshLogs;
+        RefreshLogs();
+    }
+
+    private void RefreshLogs()
+    {
+        _entries = LogSvc.GetEntries();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnInfo()     => LogSvc.LogInfo("User triggered INFO log", "Manual action from UI");
+    private void OnDebug()    => LogSvc.LogDebug("User triggered DEBUG log", "Verbose diagnostic detail");
+    private void OnWarning()  => LogSvc.LogWarning("User triggered WARNING log", "Something might need attention");
+    private void OnError()    => LogSvc.LogError("User triggered ERROR log", "Simulated error condition");
+    private void OnCritical() => LogSvc.LogCritical("User triggered CRITICAL log", "System-level critical event");
+    private void OnClear()    => LogSvc.Clear();
+
+    private void OnException()
+    {
+        try { throw new InvalidOperationException("Simulated exception for demo purposes"); }
+        catch (Exception ex) { LogSvc.LogException(ex, "UI Button Click"); }
+    }
+
+    private void OnBatch()
+    {
+        var levels = new Action[]
+        {
+            () => LogSvc.LogInfo("Batch log entry", "Bulk generation test"),
+            () => LogSvc.LogDebug("Batch debug entry", "Verbose trace"),
+            () => LogSvc.LogWarning("Batch warning entry", "Check configuration"),
+            () => LogSvc.LogError("Batch error entry", "Simulated error"),
+        };
+        for (int i = 1; i <= 20; i++)
+            levels[(i - 1) % levels.Length]();
+    }
+
+    private async Task OnPing(string service)
+    {
+        await RunBusy($"Llamando {service}...", async () =>
+        {
+            var result = await ExtSvc.PingAsync(service);
+            _lastResults = [result];
+        });
+    }
+
+    private async Task OnPingAll()
+    {
+        await RunBusy("Ping paralelo a todos los servicios...", async () =>
+        {
+            await ExtSvc.PingAllParallelAsync();
+            var tasks = ExtSvc.GetServiceNames().Select(ExtSvc.PingAsync);
+            _lastResults = (await Task.WhenAll(tasks)).ToList();
+        });
+    }
+
+    private async Task OnTimeout() => await RunBusy("Simulando timeout...",         async () => { _lastResults = [await ExtSvc.SimulateTimeoutAsync()]; });
+    private async Task OnHttp500() => await RunBusy("Simulando HTTP 500...",        async () => { _lastResults = [await ExtSvc.SimulateHttp500Async()]; });
+    private async Task OnDnsFail() => await RunBusy("Simulando DNS failure...",     async () => { _lastResults = [await ExtSvc.SimulateDnsFailureAsync()]; });
+    private async Task OnRetry()   => await RunBusy("Simulando retry + backoff...", async () => { _lastResults = [await ExtSvc.SimulateRetryAsync()]; });
+
+    private async Task RunBusy(string message, Func<Task> action)
+    {
+        _busy = true;
+        _busyMessage = message;
+        StateHasChanged();
+        try { await action(); }
+        finally { _busy = false; _busyMessage = ""; StateHasChanged(); }
+    }
+
+    private static string GetLevelColor(string level) => level switch
+    {
+        "ERROR" or "CRITICAL" => "#ff6b6b",
+        "WARNING" => "#ffd93d",
+        "DEBUG"   => "#aaa",
+        _         => "#e0e0e0"
+    };
+
+    private static string GetBadgeCss(string level) => level switch
+    {
+        "INFO"     => "bg-info text-dark",
+        "DEBUG"    => "bg-secondary",
+        "WARNING"  => "bg-warning text-dark",
+        "ERROR"    => "bg-danger",
+        "CRITICAL" => "bg-danger",
+        _          => "bg-light text-dark"
+    };
+
+    public void Dispose() => LogSvc.OnLogsChanged -= RefreshLogs;
+}

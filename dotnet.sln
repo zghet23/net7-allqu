@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogGenerator", "LogGenerator\LogGenerator.csproj", "{F6D4D55A-8F61-EA21-3075-7DE19E756FE2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F6D4D55A-8F61-EA21-3075-7DE19E756FE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6D4D55A-8F61-EA21-3075-7DE19E756FE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6D4D55A-8F61-EA21-3075-7DE19E756FE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6D4D55A-8F61-EA21-3075-7DE19E756FE2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B73F3532-1149-4072-8475-1F2CC2225ADA}
+	EndGlobalSection
+EndGlobal

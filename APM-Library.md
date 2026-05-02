@@ -92,3 +92,51 @@ Una vez que el nuevo task esté corriendo, revisar los logs del contenedor de la
 ```
 
 Esa línea confirma que el profiler del CLR cargó correctamente. Después de generar tráfico, el servicio aparece en **Datadog → APM → Services**.
+
+---
+
+## Unified Service Tagging — Docker Labels
+
+### Qué son y para qué sirven
+
+El agente de Datadog recolecta métricas de infraestructura (CPU, memoria) leyendo la metadata del task de ECS Fargate. Para saber a qué servicio pertenece cada contenedor, el agente no lee las variables de entorno — lee los **Docker labels** del contenedor.
+
+Sin estos labels, el agente ve el contenedor pero no puede correlacionarlo con el servicio APM. Datadog muestra el mensaje:
+> *"Metrics are estimates because unified service tagging isn't enabled."*
+
+Con los labels, las métricas de infraestructura quedan taggeadas con `service`, `env` y `version`, enlazándolas exactamente con las trazas y logs del mismo servicio.
+
+### Por qué no alcanzan las variables de entorno
+
+| Mecanismo | Quién lo lee | Para qué |
+|---|---|---|
+| `DD_SERVICE` / `DD_ENV` / `DD_VERSION` (env vars) | El tracer de .NET (CLR profiler) | Taggear trazas APM y logs |
+| `com.datadoghq.tags.*` (Docker labels) | El agente de Datadog | Taggear métricas de infraestructura del contenedor |
+
+Son dos canales distintos. Uno no reemplaza al otro — ambos son necesarios para tener correlación completa.
+
+### Dónde se configuran
+
+En la task definition de ECS, dentro de la definición del contenedor `net-app`, como campo `dockerLabels`:
+
+```json
+"dockerLabels": {
+  "com.datadoghq.tags.service": "netapp",
+  "com.datadoghq.tags.env":     "dev",
+  "com.datadoghq.tags.version": "2.0"
+}
+```
+
+Los valores deben coincidir exactamente con `DD_SERVICE`, `DD_ENV` y `DD_VERSION` del mismo contenedor.
+
+---
+
+## Verificar que APM funciona
+
+Una vez que el nuevo task esté corriendo, revisar los logs del contenedor de la app en CloudWatch. Un arranque exitoso del tracer se ve así:
+
+```
+[dd:info] DATADOG TRACER CONFIGURATION - {"agent_url":"http://127.0.0.1:8126", "service":"netapp", ...}
+```
+
+Esa línea confirma que el profiler del CLR cargó correctamente. Después de generar tráfico, el servicio aparece en **Datadog → APM → Services**.

@@ -1,111 +1,94 @@
- Datadog APM para .NET en ECS Fargate
+# Datadog APM — .NET Tracer on ECS Fargate
 
-  ---
-  Por qué descargamos el tracer manualmente
+## Overview
 
-  El agente de Datadog (el sidecar) recolecta métricas e infraestructura. Pero para APM — trazas de tus requests HTTP, spans
-  de HttpClient, etc. — necesitas un segundo componente: el tracer de .NET, que vive dentro de tu imagen de aplicación.
+The Datadog sidecar agent handles infrastructure metrics. APM (HTTP traces, HttpClient spans, etc.) requires a second component: the **.NET tracer**, which lives **inside your application image**.
 
-  El tracer se instala como un profiler nativo del CLR. Esto significa que se engancha al runtime de .NET a nivel bajo, antes
-  de que tu código arranque, sin que tengas que modificar nada de tu lógica de negocio.
+The tracer installs as a **native CLR profiler** — it hooks into the .NET runtime before your code starts, with zero changes to business logic.
 
-  ---
-  Paso a paso: descargar e instalar el tracer en el Dockerfile
+---
 
-  1. Descarga el tarball desde GitHub Releases
+## Step-by-Step: Install the Tracer in the Dockerfile
 
-  Entra a: https://github.com/DataDog/dd-trace-dotnet/releases
+### 1. Download the tarball
 
-  Descarga el archivo: datadog-dotnet-apm-X.X.X.tar.gz
-  (el tar.gz genérico para Linux x64, no el .deb ni el .rpm)
+Go to: `https://github.com/DataDog/dd-trace-dotnet/releases`
 
-  Cópialo al directorio donde está tu Dockerfile.
+Download: `datadog-dotnet-apm-X.X.X.tar.gz`
+(generic Linux x64 tarball — not the `.deb` or `.rpm`)
 
-  2. Agrega estas líneas en el stage runtime de tu Dockerfile
+Place it in the same directory as your `Dockerfile`.
 
-  # Copia el tarball al contenedor
-  COPY datadog-dotnet-apm-3.42.0.tar.gz /tmp/dd-tracer.tar.gz
+### 2. Add to the `runtime` stage of your Dockerfile
 
-  # Extrae el tracer — este paso es el que muchos olvidan
-  RUN mkdir -p /opt/datadog && \
-      tar -xz -C /opt/datadog -f /tmp/dd-tracer.tar.gz && \
-      rm /tmp/dd-tracer.tar.gz
+```dockerfile
+# Copy the tarball into the image
+COPY datadog-dotnet-apm-3.42.0.tar.gz /tmp/dd-tracer.tar.gz
 
-  # Le dices al CLR de .NET que active el profiler
-  ENV CORECLR_ENABLE_PROFILING=1
-  ENV CORECLR_PROFILER={846F5F1C-F9AE-4B07-969E-05C26BC060D8}
-  ENV CORECLR_PROFILER_PATH=/opt/datadog/Datadog.Trace.ClrProfiler.Native.so
-  ENV DD_DOTNET_TRACER_HOME=/opt/datadog
+# Extract it — this step is the one most people forget
+RUN mkdir -p /opt/datadog && \
+    tar -xz -C /opt/datadog -f /tmp/dd-tracer.tar.gz && \
+    rm /tmp/dd-tracer.tar.gz
 
-  El error común: copiar el tarball y olvidar el RUN tar. El archivo llega al contenedor pero nunca se desempaca. El CLR busca
-   el .so en /opt/datadog/, no lo encuentra, y silenciosamente ignora el profiler. La app corre normal pero sin APM.
+# Tell the .NET CLR to activate the profiler
+ENV CORECLR_ENABLE_PROFILING=1
+ENV CORECLR_PROFILER={846F5F1C-F9AE-4B07-969E-05C26BC060D8}
+ENV CORECLR_PROFILER_PATH=/opt/datadog/Datadog.Trace.ClrProfiler.Native.so
+ENV DD_DOTNET_TRACER_HOME=/opt/datadog
+```
 
-  ---
-  Qué hace cada variable CLR
+> **Common mistake:** copying the tarball without the `RUN tar` step. The file arrives in the image but is never unpacked. The CLR looks for the `.so` at `/opt/datadog/`, finds nothing, and silently skips the profiler. The app runs normally but sends zero traces.
 
-  ┌────────────────────────────────┬────────────────────────────────────────────────────────────────────────────────────┐
-  │            Variable            │                                   Para qué sirve                                   │
-  ├────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
-  │ CORECLR_ENABLE_PROFILING=1     │ Le dice al runtime de .NET: "hay un profiler, actívalo"                            │
-  ├────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
-  │ CORECLR_PROFILER={846F5F1C...} │ El GUID que identifica el profiler de Datadog ante el CLR                          │
-  ├────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
-  │ CORECLR_PROFILER_PATH          │ Ruta al .so nativo que se inyecta en el proceso                                    │
-  ├────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
-  │ DD_DOTNET_TRACER_HOME          │ Directorio base donde el tracer busca sus archivos de configuración y managed dlls │
-  └────────────────────────────────┴────────────────────────────────────────────────────────────────────────────────────┘
+---
 
-  Estas cuatro variables juntas hacen que el tracer se auto-instrumente: intercepta HttpClient, ASP.NET Core middleware, y más
-   — sin tocar código.
+## What Each CLR Variable Does
 
-  ---
-  Variables de entorno por contenedor
+| Variable | Purpose |
+|---|---|
+| `CORECLR_ENABLE_PROFILING=1` | Tells the .NET runtime to activate a profiler |
+| `CORECLR_PROFILER={846F5F1C...}` | The GUID that identifies the Datadog profiler to the CLR |
+| `CORECLR_PROFILER_PATH` | Path to the native `.so` injected into the process |
+| `DD_DOTNET_TRACER_HOME` | Base directory where the tracer looks for its config and managed DLLs |
 
-  Variables net-app (dentro de tu aplicación, docker file)
+These four variables together enable auto-instrumentation: HttpClient calls, ASP.NET Core middleware, and more — without touching application code.
 
-  ┌──────────────────────────┬──────────────────────────────────────────────────┬──────────────────────────────────────────┐
-  │         Variable         │                      Valor                       │                 Por qué                  │
-  ├──────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┤
-  │ CORECLR_ENABLE_PROFILING │ 1                                                │ Activa el profiler en el CLR             │
-  ├──────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┤
-  │ CORECLR_PROFILER         │ {846F5F1C-F9AE-4B07-969E-05C26BC060D8}           │ GUID del profiler de Datadog             │
-  ├──────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┤
-  │ CORECLR_PROFILER_PATH    │ /opt/datadog/Datadog.Trace.ClrProfiler.Native.so │ Ruta al profiler nativo                  │
-  ├──────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┤
-  └──────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┘
+---
 
-  Variables de entorno de ECS Fargate de tu app container
-  ┌──────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┐
-  │ DD_DOTNET_TRACER_HOME    │ /opt/datadog                                     │ Home del tracer                          │
-  ├──────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┤
-  │ DD_AGENT_HOST            │ 127.0.0.1                                        │ Dirección del agente (mismo task = misma │
-  │                          │                                                  │  red en awsvpc)                          │
-  ├──────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┤
-  │ DD_TRACE_AGENT_PORT      │ 8126                                             │ Puerto APM del agente                    │
-  ├──────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┤
-  │ DD_SERVICE               │ netapp                                           │ Nombre del servicio en Datadog           │
-  ├──────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┤
-  │ DD_ENV                   │ dev                                              │ Ambiente                                 │
-  ├──────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────────┤
-  │ DD_VERSION               │ 1.0.0                                            │ Versión para Unified Service Tagging     │
-  └──────────────────────────┴──────────────────────────────────────────────────┴──────────────────────────────────────────┘
+## Environment Variables per Container
 
-  Contenedor: datadog-agent
+### `net-app` (your application)
 
-  ┌──────────────────────────┬───────────────────────┬────────────────────────────────────────────────────────────────────┐
-  │         Variable         │         Valor         │                              Por qué                               │
-  ├──────────────────────────┼───────────────────────┼────────────────────────────────────────────────────────────────────┤
-  │ DD_API_KEY               │ (desde Secrets        │ Autenticación con Datadog                                          │
-  │                          │ Manager)              │                                                                    │
-  ├──────────────────────────┼───────────────────────┼────────────────────────────────────────────────────────────────────┤
-  │ DD_SITE                  │ datadoghq.com         │ Endpoint de ingestión                                              │
-  ├──────────────────────────┼───────────────────────┼────────────────────────────────────────────────────────────────────┤
-  │ DD_APM_ENABLED           │ true                  │ Activa el receptor de trazas en el agente                          │
-  ├──────────────────────────┼───────────────────────┼────────────────────────────────────────────────────────────────────┤
-  │ DD_APM_NON_LOCAL_TRAFFIC │ true                  │ Acepta trazas desde otros contenedores del task                    │
-  ├──────────────────────────┼───────────────────────┼────────────────────────────────────────────────────────────────────┤
-  │ DD_ENV                   │ dev                   │ Etiqueta el ambiente en las métricas del agente                    │
-  ├──────────────────────────┼───────────────────────┼────────────────────────────────────────────────────────────────────┤
-  │ ECS_FARGATE              │ true                  │ Le dice al agente que use la metadata API de Fargate en vez del    │
-  │                          │                       │ Docker socket                                                      │
-  └──────────────────────────┴───────────────────────┴────────────────────────────────────────────────────────────────────┘
+| Variable | Value | Purpose |
+|---|---|---|
+| `CORECLR_ENABLE_PROFILING` | `1` | Activates the CLR profiler |
+| `CORECLR_PROFILER` | `{846F5F1C-F9AE-4B07-969E-05C26BC060D8}` | Datadog profiler GUID |
+| `CORECLR_PROFILER_PATH` | `/opt/datadog/Datadog.Trace.ClrProfiler.Native.so` | Native profiler path |
+| `DD_DOTNET_TRACER_HOME` | `/opt/datadog` | Tracer home directory |
+| `DD_AGENT_HOST` | `127.0.0.1` | Agent address (same task = shared network in `awsvpc`) |
+| `DD_TRACE_AGENT_PORT` | `8126` | Agent APM port |
+| `DD_SERVICE` | `netapp` | Service name in Datadog |
+| `DD_ENV` | `dev` | Environment tag |
+| `DD_VERSION` | `1.0.0` | Version for Unified Service Tagging |
+
+### `datadog-agent`
+
+| Variable | Value | Purpose |
+|---|---|---|
+| `DD_API_KEY` | *(from Secrets Manager)* | Datadog authentication |
+| `DD_SITE` | `datadoghq.com` | Ingestion endpoint |
+| `DD_APM_ENABLED` | `true` | Enables the trace receiver in the agent |
+| `DD_APM_NON_LOCAL_TRAFFIC` | `true` | Accepts traces from other containers in the task |
+| `DD_ENV` | `dev` | Tags the environment on agent metrics |
+| `ECS_FARGATE` | `true` | Tells the agent to use the Fargate metadata API instead of the Docker socket |
+
+---
+
+## Verify APM is Working
+
+Once the new task is running, check the app container logs in CloudWatch. A successful tracer startup looks like:
+
+```
+[dd:info] DATADOG TRACER CONFIGURATION - {"agent_url":"http://127.0.0.1:8126", "service":"netapp", ...}
+```
+
+This line confirms the CLR profiler loaded. After generating traffic, the service appears under **Datadog → APM → Services**.

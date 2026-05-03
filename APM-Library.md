@@ -81,6 +81,7 @@ Estas cuatro variables juntas habilitan la auto-instrumentación: intercepta Htt
 | `DD_ENV` | `dev` | Etiqueta el ambiente en las métricas del agente |
 | `ECS_FARGATE` | `true` | Le dice al agente que use la metadata API de Fargate en vez del Docker socket |
 | `DD_ECS_COLLECT_RESOURCE_TAGS_EC2` | `true` | Para que CCM correlacione costos del CUR con tareas que reporta el Agent |
+| `DD_ECS_TASK_COLLECTION_ENABLED` | `true` | Para habilitar o deshabilitar la recopilación automática de metadatos de las tareas de Amazon ECS  |
 
 ---
 

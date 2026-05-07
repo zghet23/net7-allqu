@@ -80,6 +80,23 @@ Estas cuatro variables juntas habilitan la auto-instrumentación: intercepta Htt
 | `DD_APM_NON_LOCAL_TRAFFIC` | `true` | Acepta trazas desde otros contenedores del task |
 | `DD_ENV` | `dev` | Etiqueta el ambiente en las métricas del agente |
 | `ECS_FARGATE` | `true` | Le dice al agente que use la metadata API de Fargate en vez del Docker socket |
+<<<<<<< HEAD
+=======
+| `DD_ECS_COLLECT_RESOURCE_TAGS_EC2` | `true` | Para que CCM correlacione costos del CUR con tareas que reporta el Agent |
+| `DD_ECS_TASK_COLLECTION_ENABLED` | `true` | Para habilitar o deshabilitar la recopilación automática de metadatos de las tareas de Amazon ECS  |
+
+---
+
+## Verificar que APM funciona
+
+Una vez que el nuevo task esté corriendo, revisar los logs del contenedor de la app en CloudWatch. Un arranque exitoso del tracer se ve así:
+
+```
+[dd:info] DATADOG TRACER CONFIGURATION - {"agent_url":"http://127.0.0.1:8126", "service":"netapp", ...}
+```
+
+Esa línea confirma que el profiler del CLR cargó correctamente. Después de generar tráfico, el servicio aparece en **Datadog → APM → Services**.
+>>>>>>> 09b8c833a9ffb7d9574cd4defc2a985e81793d3e
 
 ---
 

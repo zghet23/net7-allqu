@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LogGenerator")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+deb6c90dac19d66f47ffc5ac4a40d41fd673d358")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8894a5bda0f3f54913e025646f4b4696d20dd749")]
 [assembly: System.Reflection.AssemblyProductAttribute("LogGenerator")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LogGenerator")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

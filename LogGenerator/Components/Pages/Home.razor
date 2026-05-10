@@ -86,8 +86,18 @@
         </div>
         <div class="card-body">
             <div class="d-flex flex-wrap gap-2 mb-3">
-                <button class="btn btn-outline-success" @onclick="OnDbTest"  disabled="@_busy">Test Connection</button>
-                <button class="btn btn-outline-success" @onclick="OnDbQuery" disabled="@_busy">Run Sample Query</button>
+                <button class="btn btn-outline-success" @onclick="OnDbTest"        disabled="@_busy">Test Connection</button>
+                <button class="btn btn-outline-success" @onclick="OnDbQuery"       disabled="@_busy">Schemas Overview</button>
+                <button class="btn btn-outline-primary" @onclick="OnTopCustomers"  disabled="@_busy">Top Customers</button>
+                <button class="btn btn-outline-primary" @onclick="OnOrdersStatus"  disabled="@_busy">Orders by Status</button>
+                <button class="btn btn-outline-primary" @onclick="OnCatalogAgg"    disabled="@_busy">Catalog (agg)</button>
+                <button class="btn btn-outline-primary" @onclick="OnCatalogList"   disabled="@_busy">Catalog by Category</button>
+                <button class="btn btn-outline-warning" @onclick="OnSearchReviews" disabled="@_busy">Search Reviews (slow LIKE)</button>
+                <button class="btn btn-outline-danger"  @onclick="OnHeavyReport"   disabled="@_busy">Heavy Report</button>
+                <button class="btn btn-outline-secondary" @onclick="OnCreateOrder" disabled="@_busy">Create Random Order (TX)</button>
+                <button class="btn @( _loadGenOn ? "btn-danger" : "btn-success" )" @onclick="OnToggleLoadGen">
+                    @( _loadGenOn ? "Stop Load Generator" : "Start Load Generator" )
+                </button>
             </div>
             @if (_dbResult is not null)
             {
@@ -218,6 +228,39 @@
 
     private async Task OnDbTest()  => await RunBusy("Probando conexion MySQL...",  async () => { _dbResult = await DbSvc.TestConnectionAsync(); });
     private async Task OnDbQuery() => await RunBusy("Ejecutando query sample...",   async () => { _dbResult = await DbSvc.RunSampleQueryAsync(); });
+    private async Task OnTopCustomers()  => await RunBusy("Top customers...",        async () => { _dbResult = await DbSvc.GetTopCustomersByRevenueAsync(); });
+    private async Task OnOrdersStatus()  => await RunBusy("Orders by status...",     async () => { _dbResult = await DbSvc.GetOrdersByStatusAsync("paid"); });
+    private async Task OnCatalogAgg()    => await RunBusy("Catalog agg...",          async () => { _dbResult = await DbSvc.GetProductCatalogByCategoryAsync(null); });
+    private async Task OnCatalogList()   => await RunBusy("Catalog by category...",  async () => { _dbResult = await DbSvc.GetProductCatalogByCategoryAsync("electronics"); });
+    private async Task OnSearchReviews() => await RunBusy("Search reviews (slow)...",async () => { _dbResult = await DbSvc.SearchReviewsAsync("great"); });
+    private async Task OnHeavyReport()   => await RunBusy("Heavy report...",         async () => { _dbResult = await DbSvc.RunHeavyReportAsync(); });
+    private async Task OnCreateOrder()   => await RunBusy("Creando order...",        async () => { _dbResult = await DbSvc.CreateRandomOrderAsync(); });
+
+    private bool _loadGenOn;
+    private CancellationTokenSource? _loadGenCts;
+    private void OnToggleLoadGen()
+    {
+        if (_loadGenOn)
+        {
+            _loadGenCts?.Cancel();
+            _loadGenOn = false;
+            LogSvc.LogInfo("Load generator stopped", "");
+            return;
+        }
+        _loadGenCts = new CancellationTokenSource();
+        _loadGenOn = true;
+        LogSvc.LogInfo("Load generator started", "running random DBM queries every ~750ms");
+        var ct = _loadGenCts.Token;
+        _ = Task.Run(async () =>
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                try { await DbSvc.RunRandomQueryAsync(); }
+                catch (Exception ex) { LogSvc.LogException(ex, "LoadGen"); }
+                try { await Task.Delay(TimeSpan.FromMilliseconds(750), ct); } catch { }
+            }
+        }, ct);
+    }
 
     private async Task OnTimeout() => await RunBusy("Simulando timeout...",         async () => { _lastResults = [await ExtSvc.SimulateTimeoutAsync()]; });
     private async Task OnHttp500() => await RunBusy("Simulando HTTP 500...",        async () => { _lastResults = [await ExtSvc.SimulateHttp500Async()]; });
@@ -251,5 +294,9 @@
         _          => "bg-light text-dark"
     };
 
-    public void Dispose() => LogSvc.OnLogsChanged -= RefreshLogs;
+    public void Dispose()
+    {
+        LogSvc.OnLogsChanged -= RefreshLogs;
+        _loadGenCts?.Cancel();
+    }
 }

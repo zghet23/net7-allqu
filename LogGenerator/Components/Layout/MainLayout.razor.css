@@ -94,3 +94,20 @@ main {
         right: 0.75rem;
         top: 0.5rem;
     }
+
+::deep .version-badge {
+    position: fixed;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    z-index: 1050;
+    padding: 0.2rem 0.55rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(33, 37, 41, 0.85);
+    border-radius: 0.35rem;
+    letter-spacing: 0.02em;
+    user-select: none;
+    pointer-events: none;
+}

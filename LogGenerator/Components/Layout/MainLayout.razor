@@ -1,5 +1,9 @@
 ﻿@inherits LayoutComponentBase
 
+<div class="version-badge" title="App version (DD_VERSION)">
+    v@(Environment.GetEnvironmentVariable("DD_VERSION") ?? "dev")
+</div>
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />

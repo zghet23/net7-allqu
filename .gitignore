@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+appsettings.Local.json
+*.user
+secrets.json
+.claude/
+LogGenerator/db/
+
+# .NET build outputs
+bin/
+obj/

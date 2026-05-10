@@ -36,17 +36,17 @@
 
     <!-- EXTERNAL CALLS SECTION -->
     <div class="card mb-3">
-        <div class="card-header fw-bold">Llamados a Servicios Externos</div>
+        <div class="card-header fw-bold">Flujos contra APIs Externas</div>
         <div class="card-body">
             <div class="d-flex flex-wrap gap-2 mb-3">
-                @foreach (var svc in ExtSvc.GetServiceNames())
+                @foreach (var flow in ExtSvc.GetServiceNames())
                 {
-                    <button class="btn btn-outline-primary" @onclick="() => OnPing(svc)" disabled="@_busy">
-                        Ping @svc
+                    <button class="btn btn-outline-primary" @onclick="() => OnFlow(flow)" disabled="@_busy">
+                        Run @flow
                     </button>
                 }
-                <button class="btn btn-primary" @onclick="OnPingAll" disabled="@_busy">
-                    Ping TODOS (paralelo)
+                <button class="btn btn-primary" @onclick="OnAllFlows" disabled="@_busy">
+                    Run TODOS los flujos (paralelo)
                 </button>
             </div>
             @if (_lastResults.Count > 0)
@@ -207,22 +207,21 @@
             levels[(i - 1) % levels.Length]();
     }
 
-    private async Task OnPing(string service)
+    private async Task OnFlow(string flow)
     {
-        await RunBusy($"Llamando {service}...", async () =>
+        await RunBusy($"Ejecutando {flow}...", async () =>
         {
-            var result = await ExtSvc.PingAsync(service);
-            _lastResults = [result];
+            _lastResults = await ExtSvc.RunFlowAsync(flow);
         });
     }
 
-    private async Task OnPingAll()
+    private async Task OnAllFlows()
     {
-        await RunBusy("Ping paralelo a todos los servicios...", async () =>
+        await RunBusy("Ejecutando todos los flujos en paralelo...", async () =>
         {
-            await ExtSvc.PingAllParallelAsync();
-            var tasks = ExtSvc.GetServiceNames().Select(ExtSvc.PingAsync);
-            _lastResults = (await Task.WhenAll(tasks)).ToList();
+            var tasks = ExtSvc.GetServiceNames().Select(ExtSvc.RunFlowAsync);
+            var all = await Task.WhenAll(tasks);
+            _lastResults = all.SelectMany(r => r).ToList();
         });
     }
 

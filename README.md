@@ -232,15 +232,15 @@ docker build -t net-allqu:latest .
 
 # 3. Tag
 docker tag net-allqu:latest \
-  369042512949.dkr.ecr.us-west-2.amazonaws.com/net-allqu:latest
+  369042512949.dkr.ecr.us-west-2.amazonaws.com/netallqu-app
 
 # 4. Push
-docker push 369042512949.dkr.ecr.us-west-2.amazonaws.com/net-allqu:latest
+docker push 369042512949.dkr.ecr.us-west-2.amazonaws.com/netallqu-app
 Notas importantes según tu Dockerfile:
 
 El Dockerfile:15 espera el archivo datadog-dotnet-apm-3.42.0.tar.gz en el contexto de build, así que asegúrate de que esté presente en LogGenerator/ antes del build.
 Si tu Mac es Apple Silicon (M1/M2/M3) y tu ECS/EKS corre en linux/amd64, usa buildx para evitar problemas de arquitectura:
 
 docker buildx build --platform linux/amd64 \
-  -t 369042512949.dkr.ecr.us-west-2.amazonaws.com/net-allqu:latest \
+  -t 369042512949.dkr.ecr.us-west-2.amazonaws.com/netallqu-app \
   --push .

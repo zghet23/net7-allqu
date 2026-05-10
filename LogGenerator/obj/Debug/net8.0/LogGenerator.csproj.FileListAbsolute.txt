@@ -49,3 +49,5 @@
 /Users/julio.hernandez/Desktop/agent/dotnet/LogGenerator/obj/Debug/net8.0/LogGenerator.pdb
 /Users/julio.hernandez/Desktop/agent/dotnet/LogGenerator/obj/Debug/net8.0/LogGenerator.genruntimeconfig.cache
 /Users/julio.hernandez/Desktop/agent/dotnet/LogGenerator/obj/Debug/net8.0/ref/LogGenerator.dll
+/Users/julio.hernandez/Desktop/agent/dotnet/LogGenerator/bin/Debug/net8.0/MySqlConnector.dll
+/Users/julio.hernandez/Desktop/agent/dotnet/LogGenerator/obj/Debug/net8.0/LogGenerator.sourcelink.json

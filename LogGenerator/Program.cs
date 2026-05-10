@@ -28,6 +28,7 @@ public class Program
                 .AddInteractiveServerComponents();
 
             builder.Services.AddSingleton<LogService>();
+            builder.Services.AddSingleton<MySqlService>();
             builder.Services.AddHttpClient<ExternalCallService>(c =>
             {
                 c.Timeout = TimeSpan.FromSeconds(15);

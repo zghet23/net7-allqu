@@ -9,6 +9,7 @@
       "LogGenerator/1.0.0": {
         "dependencies": {
           "Microsoft.Extensions.Diagnostics.HealthChecks": "8.0.15",
+          "MySqlConnector": "2.3.7",
           "Polly": "8.5.2",
           "Polly.Extensions.Http": "3.0.0",
           "Serilog.AspNetCore": "8.0.3",
@@ -135,6 +136,17 @@
         }
       },
       "Microsoft.Extensions.Primitives/8.0.0": {},
+      "MySqlConnector/2.3.7": {
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.3"
+        },
+        "runtime": {
+          "lib/net8.0/MySqlConnector.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.3.7.0"
+          }
+        }
+      },
       "Polly/8.5.2": {
         "dependencies": {
           "Polly.Core": "8.5.2"
@@ -380,6 +392,13 @@
       "sha512": "sha512-bXJEZrW9ny8vjMF1JV253WeLhpEVzFo1lyaZu1vQ4ZxWUlVvknZ/+ftFgVheLubb4eZPSwwxBeqS1JkCOjxd8g==",
       "path": "microsoft.extensions.primitives/8.0.0",
       "hashPath": "microsoft.extensions.primitives.8.0.0.nupkg.sha512"
+    },
+    "MySqlConnector/2.3.7": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-YiVOxvJ+vAYW8NT9gHv8RxKCDFCSXAObF3z0Ou/8WRv8Lsn2QsxaPW5xEwPE+xCcAq6BGkrI8GTOC09Xg09blQ==",
+      "path": "mysqlconnector/2.3.7",
+      "hashPath": "mysqlconnector.2.3.7.nupkg.sha512"
     },
     "Polly/8.5.2": {
       "type": "package",

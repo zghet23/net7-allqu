@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "nItHVY6pROMq1Ns8bHZC9nUqCSbW5kmH82cqAX008OpeBkP0NPP9Oj7XY1LdJL4MtoahUFfRVnhBmT0W4PxTSg==",
+  "dgSpecHash": "m0i0rQTH020ZMWDNR/87bD9ZDcP+V/zCVS9lw12V5zmFsCzrwSQ33Xk+jCUVpMgJEj8TjekmfhlLrv8d/X6oUA==",
   "success": true,
   "projectFilePath": "/Users/julio.hernandez/Desktop/agent/dotnet/LogGenerator/LogGenerator.csproj",
   "expectedPackageFiles": [
@@ -18,6 +18,7 @@
     "/Users/julio.hernandez/.nuget/packages/microsoft.extensions.logging.abstractions/8.0.3/microsoft.extensions.logging.abstractions.8.0.3.nupkg.sha512",
     "/Users/julio.hernandez/.nuget/packages/microsoft.extensions.options/8.0.2/microsoft.extensions.options.8.0.2.nupkg.sha512",
     "/Users/julio.hernandez/.nuget/packages/microsoft.extensions.primitives/8.0.0/microsoft.extensions.primitives.8.0.0.nupkg.sha512",
+    "/Users/julio.hernandez/.nuget/packages/mysqlconnector/2.3.7/mysqlconnector.2.3.7.nupkg.sha512",
     "/Users/julio.hernandez/.nuget/packages/polly/8.5.2/polly.8.5.2.nupkg.sha512",
     "/Users/julio.hernandez/.nuget/packages/polly.core/8.5.2/polly.core.8.5.2.nupkg.sha512",
     "/Users/julio.hernandez/.nuget/packages/polly.extensions.http/3.0.0/polly.extensions.http.3.0.0.nupkg.sha512",

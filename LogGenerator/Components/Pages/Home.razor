@@ -3,6 +3,7 @@
 @using LogGenerator.Services
 @inject LogService LogSvc
 @inject ExternalCallService ExtSvc
+@inject MySqlService DbSvc
 @implements IDisposable
 
 <PageTitle>Log Generator — ECS Fargate Demo</PageTitle>
@@ -77,6 +78,40 @@
         </div>
     </div>
 
+    <!-- DATABASE SECTION -->
+    <div class="card mb-3">
+        <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+            <span>Base de Datos (MySQL / RDS)</span>
+            <small class="text-muted">@DbSvc.SafeEndpoint</small>
+        </div>
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <button class="btn btn-outline-success" @onclick="OnDbTest"  disabled="@_busy">Test Connection</button>
+                <button class="btn btn-outline-success" @onclick="OnDbQuery" disabled="@_busy">Run Sample Query</button>
+            </div>
+            @if (_dbResult is not null)
+            {
+                <div class="alert @(_dbResult.Success ? "alert-success" : "alert-danger") py-2 mb-2 small">
+                    @_dbResult.Message
+                </div>
+                @if (_dbResult.Rows is { Count: > 0 })
+                {
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="table-light">
+                            <tr>@foreach (var k in _dbResult.Rows[0].Keys) { <th>@k</th> }</tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in _dbResult.Rows)
+                            {
+                                <tr>@foreach (var k in row.Keys) { <td>@row[k]</td> }</tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            }
+        </div>
+    </div>
+
     <!-- ERROR SCENARIOS SECTION -->
     <div class="card mb-3">
         <div class="card-header fw-bold">Escenarios de Error</div>
@@ -122,6 +157,7 @@
     private string _busyMessage = "";
     private IEnumerable<LogEntry> _entries = [];
     private List<ExternalCallResult> _lastResults = [];
+    private DbResult? _dbResult;
 
     protected override void OnInitialized()
     {
@@ -179,6 +215,9 @@
             _lastResults = (await Task.WhenAll(tasks)).ToList();
         });
     }
+
+    private async Task OnDbTest()  => await RunBusy("Probando conexion MySQL...",  async () => { _dbResult = await DbSvc.TestConnectionAsync(); });
+    private async Task OnDbQuery() => await RunBusy("Ejecutando query sample...",   async () => { _dbResult = await DbSvc.RunSampleQueryAsync(); });
 
     private async Task OnTimeout() => await RunBusy("Simulando timeout...",         async () => { _lastResults = [await ExtSvc.SimulateTimeoutAsync()]; });
     private async Task OnHttp500() => await RunBusy("Simulando HTTP 500...",        async () => { _lastResults = [await ExtSvc.SimulateHttp500Async()]; });

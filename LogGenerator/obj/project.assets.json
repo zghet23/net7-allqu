@@ -261,6 +261,22 @@
           "buildTransitive/net6.0/_._": {}
         }
       },
+      "MySqlConnector/2.3.7": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "7.0.1"
+        },
+        "compile": {
+          "lib/net8.0/MySqlConnector.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net8.0/MySqlConnector.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "Polly/8.5.2": {
         "type": "package",
         "dependencies": {
@@ -941,6 +957,35 @@
         "useSharedDesignerContext.txt"
       ]
     },
+    "MySqlConnector/2.3.7": {
+      "sha512": "YiVOxvJ+vAYW8NT9gHv8RxKCDFCSXAObF3z0Ou/8WRv8Lsn2QsxaPW5xEwPE+xCcAq6BGkrI8GTOC09Xg09blQ==",
+      "type": "package",
+      "path": "mysqlconnector/2.3.7",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "README.md",
+        "lib/net462/MySqlConnector.dll",
+        "lib/net462/MySqlConnector.xml",
+        "lib/net471/MySqlConnector.dll",
+        "lib/net471/MySqlConnector.xml",
+        "lib/net48/MySqlConnector.dll",
+        "lib/net48/MySqlConnector.xml",
+        "lib/net6.0/MySqlConnector.dll",
+        "lib/net6.0/MySqlConnector.xml",
+        "lib/net7.0/MySqlConnector.dll",
+        "lib/net7.0/MySqlConnector.xml",
+        "lib/net8.0/MySqlConnector.dll",
+        "lib/net8.0/MySqlConnector.xml",
+        "lib/netstandard2.0/MySqlConnector.dll",
+        "lib/netstandard2.0/MySqlConnector.xml",
+        "lib/netstandard2.1/MySqlConnector.dll",
+        "lib/netstandard2.1/MySqlConnector.xml",
+        "logo.png",
+        "mysqlconnector.2.3.7.nupkg.sha512",
+        "mysqlconnector.nuspec"
+      ]
+    },
     "Polly/8.5.2": {
       "sha512": "vbXsGgkG86nG+TOwY+SmtrGrRHmHH0DQaxtILx//d3Dz/ocJ8izSNYzdvU2gEtWa/LDD8zJLvD3HdjEkdlvkhg==",
       "type": "package",
@@ -1225,6 +1270,7 @@
   "projectFileDependencyGroups": {
     "net8.0": [
       "Microsoft.Extensions.Diagnostics.HealthChecks >= 8.0.15",
+      "MySqlConnector >= 2.3.7",
       "Polly >= 8.5.2",
       "Polly.Extensions.Http >= 3.0.0",
       "Serilog.AspNetCore >= 8.0.3",
@@ -1272,6 +1318,10 @@
           "Microsoft.Extensions.Diagnostics.HealthChecks": {
             "target": "Package",
             "version": "[8.0.15, )"
+          },
+          "MySqlConnector": {
+            "target": "Package",
+            "version": "[2.3.7, )"
           },
           "Polly": {
             "target": "Package",
